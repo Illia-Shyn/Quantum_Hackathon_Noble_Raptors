@@ -7,3 +7,5 @@ numpy>=1.26
 matplotlib>=3.7
 pylatexenc>=2.10
 google-genai>=1.0
+streamlit>=1.67
+plotly>=6.0

@@ -72,9 +72,11 @@ class FitReport:
     summary: str = ""
     classical: dict = field(default_factory=dict)
     device: dict = field(default_factory=dict)
+    compiled: object = field(default=None, repr=False, compare=False)   # the transpiled circuit, for visuals
 
     def to_dict(self) -> dict:
         d = dict(self.__dict__)
+        d.pop("compiled", None)
         d["classical"] = {k: v for k, v in self.classical.items() if k not in ("bits", "assignment")}
         return d
 
@@ -163,6 +165,7 @@ def fit_check(problem: Problem, backend=None, reps: int = 1, shots: int = 1000, 
                               f"{backend.num_qubits} are connected by working couplers in this calibration.")
     else:
         isa = transpile_for(backend, bind_random(qaoa_circuit(problem, reps, measure=True), seed), seed)
+        report.compiled = isa
         report.metrics = circuit_metrics(backend, isa)
         est = success_estimate(backend, isa)
         report.success, report.success_by_gate = est["success"], est["success_by_gate"]

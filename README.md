@@ -50,6 +50,25 @@ pip install -r requirements.txt
 jupyter notebook notebooks/quantum_fit_check.ipynb
 ```
 
+**The interactive app** (Streamlit, on a laptop):
+
+```bash
+streamlit run app.py
+```
+
+It opens at http://localhost:8501. Describe a task in plain words or pick a problem (a random network,
+synthetic hospital data, or your own CSV), press **Run fit check**, and read the answer in five tabs:
+Problem, Circuit, Qubits (a live map of the 156-qubit chip), Estimates and Validation. **Simple** view is
+for the decision maker; **Expert** view adds the cost-function heatmap, gate counts and drawings, per-link
+error rates, the price on every plan and the transpiler-seed spread. Hover any chart for its numbers, and
+download the report as Markdown. The app uses the local copy of ibm_fez, so it needs no IBM key and spends
+no QPU time; the Validation tab reads the hardware results saved in `results/`.
+
+To publish it, deploy the repository on Streamlit Community Cloud with `app.py` as the entry point. For
+plain-language intake there, add `GEMINI_API_KEY` under the app's Secrets; locally, use an environment
+variable or `.streamlit/secrets.toml` (git-ignored). Never give the app an IBM key: anyone with the link
+could spend your minutes.
+
 **In code:**
 
 ```python
@@ -73,7 +92,7 @@ Keys go in Colab Secrets (the key icon in the sidebar) or environment variables.
 
 | Name | Used for |
 | --- | --- |
-| `GEMINI_API_KEY` | Plain-language intake. Without it the tool uses keyword matching. `GEMINI_MODEL` overrides the model. |
+| `GEMINI_API_KEY` | Plain-language intake, in the notebook and the app. Without it the tool uses keyword matching. `GEMINI_MODEL` overrides the model. |
 | `QISKIT_IBM_TOKEN`, `QISKIT_IBM_INSTANCE` | The real hardware run in section 7 of the notebook. |
 
 ## How it works
@@ -100,7 +119,8 @@ be reproduced. The hospital data is synthetic.
 
 ## Files
 
-- `fitcheck/` the library
+- `fitcheck/` the library (`fitcheck/visuals.py` holds the interactive Plotly charts)
+- `app.py` the interactive Streamlit app
 - `notebooks/quantum_fit_check.ipynb` the demo, with outputs
 - `tools/build_notebook.py` regenerates the notebook
 - `tests/` the test suite
