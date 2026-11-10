@@ -18,7 +18,7 @@ def no_llm(monkeypatch):
 
 def run(view="Simple", **job):
     at = st_testing.AppTest.from_file(APP, default_timeout=300)
-    at.session_state["view"] = view
+    at.session_state["expert"] = view == "Expert"
     if job:
         at.session_state["job"] = {"reps": 1, "shots": 1000, "seed": 7, **job}
     at.run()
@@ -42,6 +42,18 @@ def test_default_request(view):
 def test_maxcut_pick(view):
     at = run(view, mode="Pick a problem", kind="maxcut_random", size=10, degree=3)
     assert "worth a hardware test" in verdict(at)
+
+
+def test_view_switch_changes_the_tabs_and_back():
+    def expert_only(at):
+        return any(m.value == "**Why this verdict**" for m in at.markdown)
+
+    at = run("Simple")
+    assert at.toggle(key="expert").value is False and not expert_only(at)
+    at.toggle(key="expert").set_value(True).run()
+    assert not at.exception and expert_only(at)
+    at.toggle(key="expert").set_value(False).run()
+    assert not at.exception and not expert_only(at)
 
 
 def test_noise_dominates():

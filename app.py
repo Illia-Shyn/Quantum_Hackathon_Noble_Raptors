@@ -154,8 +154,6 @@ def show_mpl(fig):
 
 with st.sidebar:
     st.title("Quantum Fit Check")
-    view = st.segmented_control("View", ["Simple", "Expert"], default="Simple", key="view") or "Simple"
-    expert = view == "Expert"
     mode = st.radio("Describe the problem", ["In plain words", "Pick a problem"], horizontal=True, key="mode")
 
     params: dict = {}
@@ -249,7 +247,11 @@ with st.spinner("Building the circuit and compiling it for the device..."):
 
 # ---------------------------------------------------------------- header
 
-st.title("Quantum Fit Check")
+head, switch = st.columns([3, 1], vertical_alignment="center")
+head.title("Quantum Fit Check")
+# A toggle, not a two-option picker: it always has a state, and it sits by the title so it stays
+# visible when the sidebar is folded away on a narrow screen.
+expert = switch.toggle("Expert view", key="expert")
 st.markdown("**Is this problem worth running on today's quantum computers, and what would it cost?** "
             "Answered before any quantum time is spent.")
 
@@ -285,6 +287,13 @@ else:
 
 st.download_button("Download this report (Markdown)", report.to_markdown(),
                    file_name=f"fit-check-{report.problem_name.lower().replace(' ', '-')}.md", mime="text/markdown")
+
+if expert:
+    st.caption(":blue[**Expert view.**] Each tab adds the numbers behind it: the cost-function heatmap, gate counts and "
+               "circuit drawings, error rates on every qubit and link, prices on every plan, error sources, and every "
+               "hardware run with its job ID.")
+else:
+    st.caption("**Simple view.** Switch on **Expert view** (top right) for the diagrams and numbers behind each tab.")
 
 tab_problem, tab_circuit, tab_qubits, tab_estimates, tab_validation = st.tabs(
     ["Problem", "Circuit", "Qubits", "Estimates", "Validation"])
