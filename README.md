@@ -1,0 +1,93 @@
+# Quantum Fit Check
+
+**Is this problem worth running on today's quantum computers, and what would it cost?**
+
+Team Noble Raptors · Qiskit Fall Fest 2026, Miami Dade College
+
+Quantum Fit Check takes a problem, builds its quantum circuit in Qiskit, compiles it for a real IBM
+device, and answers before any quantum time is spent:
+
+- how many qubits and gates the problem needs on that device,
+- the chance a shot finishes without an error, from IBM's published error rates,
+- the QPU seconds and the price on each IBM plan,
+- how long a classical computer takes on the same problem,
+- a verdict: **does not fit**, **runs, but noise dominates**, or **worth a hardware test**.
+
+It then tests its own estimates with mirror circuits on a noisy simulator and on real hardware.
+
+## What it does not claim
+
+It never says quantum beats classical. "Worth a hardware test" only means the circuit can run cleanly
+enough to measure. See [LIMITATIONS.md](LIMITATIONS.md).
+
+## Run it
+
+**Google Colab:** open [notebooks/quantum_fit_check.ipynb](notebooks/quantum_fit_check.ipynb) in Colab
+and choose Runtime, Run all. The first cell clones this repository and installs everything. No key is
+needed up to section 7.
+
+**On a laptop** (Python 3.10 or later):
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+jupyter notebook notebooks/quantum_fit_check.ipynb
+```
+
+**In code:**
+
+```python
+import fitcheck as fc
+
+report = fc.fit_check(fc.maxcut_problem(fc.random_graph(10)))   # local copy of ibm_fez, no key
+print(report.to_markdown())
+
+spec, report = fc.check_request("Assign 4 patients to 4 hospital beds at the lowest cost")
+```
+
+**Tests:**
+
+```bash
+python -m pytest -q
+```
+
+## Optional keys
+
+Keys go in Colab Secrets (the key icon in the sidebar) or environment variables. Never in a cell or a commit.
+
+| Name | Used for |
+| --- | --- |
+| `GEMINI_API_KEY` | Plain-language intake. Without it the tool uses keyword matching. `GEMINI_MODEL` overrides the model. |
+| `QISKIT_IBM_TOKEN`, `QISKIT_IBM_INSTANCE` | The real hardware run in section 7 of the notebook. |
+
+## How it works
+
+| Stage | What happens | Code |
+| --- | --- | --- |
+| Intake | A sentence becomes a problem type and size. The language model only picks the template. | `fitcheck/intake.py` |
+| Build | The problem becomes an Ising cost function and a QAOA circuit, gate by gate. | `fitcheck/problems.py`, `fitcheck/circuits.py` |
+| Transpile | The circuit is compiled for the device, avoiding dead couplers and keeping the best of three layouts. | `fitcheck/estimate.py` |
+| Estimate | Success chance, QPU seconds (IBM's usage formula) and price (IBM's published rates). | `fitcheck/estimate.py`, `fitcheck/device.py` |
+| Baseline | The same problem is solved classically and timed. | `fitcheck/classical.py` |
+| Verdict | Fit verdict plus a documented problem-shape label. | `fitcheck/core.py` |
+| Validate | Mirror circuits: predicted against measured success, simulator and hardware. | `fitcheck/validate.py`, `fitcheck/hardware.py` |
+
+Prices were read from https://www.ibm.com/quantum/pricing on 2026-11-10: Pay-As-You-Go $96, Flex $72
+and Premium $48 per minute; the Open Plan gives up to 10 free minutes. The QPU-time formula is from
+IBM's "Workload usage" guide.
+
+## Results
+
+Saved in [results/](results/): the simulator validation data, the headline chart, and the hardware run
+once it has been submitted. All generated graphs and cost tables use fixed seeds, so every number can
+be reproduced. The hospital data is synthetic.
+
+## Files
+
+- `fitcheck/` the library
+- `notebooks/quantum_fit_check.ipynb` the demo, with outputs
+- `tools/build_notebook.py` regenerates the notebook
+- `tests/` the test suite
+- `USE-CASE.md`, `LIMITATIONS.md`

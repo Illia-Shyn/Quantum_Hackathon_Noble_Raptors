@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.env
+*.key
+scratch*.py
+# event documents and private planning notes, not part of the submission
+PARTICIPANT_HANDBOOK.md
+Grading criteria*
+Quantum Fit Check*build plan.md

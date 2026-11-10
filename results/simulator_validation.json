@@ -1,0 +1,60 @@
+{
+  "backend": "fake_fez",
+  "rows": [
+    {
+      "num_nodes": 4,
+      "reps": 1,
+      "shots": 2000,
+      "repeats": 3,
+      "two_qubit_gates": 36,
+      "predicted_mean": 0.8772316417206607,
+      "predicted_std": 0.004713200693798314,
+      "simulated_mean": 0.8743333333333334,
+      "simulated_std": 0.008605553762283707
+    },
+    {
+      "num_nodes": 6,
+      "reps": 1,
+      "shots": 2000,
+      "repeats": 3,
+      "two_qubit_gates": 52,
+      "predicted_mean": 0.8022893418623789,
+      "predicted_std": 0.006864208994696674,
+      "simulated_mean": 0.7943333333333333,
+      "simulated_std": 0.005734883511361756
+    },
+    {
+      "num_nodes": 8,
+      "reps": 1,
+      "shots": 2000,
+      "repeats": 3,
+      "two_qubit_gates": 100,
+      "predicted_mean": 0.7033293746859588,
+      "predicted_std": 0.019135072699869568,
+      "simulated_mean": 0.6996666666666665,
+      "simulated_std": 0.01896634446123509
+    },
+    {
+      "num_nodes": 10,
+      "reps": 1,
+      "shots": 2000,
+      "repeats": 3,
+      "two_qubit_gates": 112,
+      "predicted_mean": 0.6314569688236816,
+      "predicted_std": 0.01946641884467314,
+      "simulated_mean": 0.6253333333333333,
+      "simulated_std": 0.011418795421973736
+    },
+    {
+      "num_nodes": 12,
+      "reps": 1,
+      "shots": 2000,
+      "repeats": 3,
+      "two_qubit_gates": 146,
+      "predicted_mean": 0.5818943782449053,
+      "predicted_std": 0.01676925372473266,
+      "simulated_mean": 0.5636666666666666,
+      "simulated_std": 0.022702178064866144
+    }
+  ]
+}
