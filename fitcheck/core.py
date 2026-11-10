@@ -1,6 +1,7 @@
 """The fit check itself: problem in, verdict out."""
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from .circuits import bind_random, qaoa_circuit
@@ -67,6 +68,8 @@ class FitReport:
     price: dict = field(default_factory=dict)
     full_run_seconds: float | None = None
     full_run_price: dict = field(default_factory=dict)
+    error_reduction_needed: float | None = None   # how many times lower errors must be to pass
+    summary: str = ""
     classical: dict = field(default_factory=dict)
     device: dict = field(default_factory=dict)
 
@@ -84,6 +87,7 @@ class FitReport:
             "",
             f"**Verdict: {self.verdict}**",
             "",
+            *([f"**In plain words:** {self.summary}", ""] if self.summary else []),
             *[f"- {r}" for r in self.reasons],
             "",
             f"**Problem shape: {self.shape}.** {self.shape_reason}",
@@ -101,6 +105,8 @@ class FitReport:
                 f"| Circuit duration | {m['duration_seconds'] * 1e6:.1f} microseconds |"
                 if m.get("duration_seconds") is not None else "| Circuit duration | unknown |",
                 f"| Estimated success chance per shot | {pct(self.success)} |",
+                *([f"| What would need to improve | device errors about {self.error_reduction_needed:,.1f}x lower |"]
+                  if self.error_reduction_needed else []),
                 f"| Estimated QPU time ({self.shots} shots) | {self.qpu_seconds:.2f} s |",
                 f"| Share of the 10 free minutes | {self.price['share_of_free_minutes']:.2%} |",
                 f"| Price, Pay-As-You-Go | ${self.price['Pay-As-You-Go']:.2f} |",
@@ -130,6 +136,7 @@ def shape_only_report(kind: str, description: str = "") -> FitReport:
         reasons=["This tool only builds circuits for graph and assignment problems, so it gives "
                  "the shape label without a circuit estimate."],
         backend="-", logical_qubits=0, device_qubits=0, reps=0, shots=0,
+        summary=f"This kind of task is {shape}. {reason}",
     )
 
 
@@ -159,6 +166,9 @@ def fit_check(problem: Problem, backend=None, reps: int = 1, shots: int = 1000, 
         report.metrics = circuit_metrics(backend, isa)
         est = success_estimate(backend, isa)
         report.success, report.success_by_gate = est["success"], est["success_by_gate"]
+        if report.success < SUCCESS_THRESHOLD:
+            # log(success) is close to -(sum of errors), so it scales with the error rates
+            report.error_reduction_needed = est["log_success"] / math.log(SUCCESS_THRESHOLD)
         report.qpu_seconds = qpu_seconds(backend, report.metrics["duration_seconds"], shots)
         report.price = price(report.qpu_seconds)
         report.full_run_seconds = report.qpu_seconds * OPTIMISATION_RUNS
@@ -171,6 +181,9 @@ def fit_check(problem: Problem, backend=None, reps: int = 1, shots: int = 1000, 
             report.verdict = "runs, but noise dominates"
             report.reasons.append(f"Only {pct(report.success)} of shots are expected to finish "
                                   f"without an error (our threshold is {SUCCESS_THRESHOLD:.0%}).")
+            report.reasons.append(f"What would need to improve: gate and readout errors about "
+                                  f"{report.error_reduction_needed:,.1f} times lower than this device's, "
+                                  "for this same circuit to pass the threshold.")
         else:
             report.verdict = "worth a hardware test"
             report.reasons.append(f"About {report.success:.0%} of shots are expected to finish without "
@@ -184,4 +197,21 @@ def fit_check(problem: Problem, backend=None, reps: int = 1, shots: int = 1000, 
                           "to measure. It never means quantum beats the classical solver."
                           if report.verdict == "worth a hardware test" else
                           "Nothing here suggests quantum beats the classical solver today.")
+    report.summary = _plain_summary(report)
     return report
+
+
+def _plain_summary(r: FitReport) -> str:
+    classical = (f" A classical computer solves it in {r.classical['seconds'] * 1000:.3f} ms."
+                 if r.classical.get("seconds") is not None else "")
+    if r.verdict == "does not fit":
+        text = "This problem is too big for the device, so it cannot be run at all today."
+    elif r.verdict == "runs, but noise dominates":
+        text = (f"The problem fits on the device, but the circuit is so long that errors would drown "
+                f"the answer; the device would need to be about {r.error_reduction_needed:,.1f} times "
+                "more accurate.")
+    else:
+        text = (f"The circuit is small enough that roughly {r.success:.0%} of runs would finish without "
+                f"an error, for about ${r.price['Pay-As-You-Go']:.2f} per job, so it is a fair "
+                "experiment, not a faster way to get the answer.")
+    return text + classical

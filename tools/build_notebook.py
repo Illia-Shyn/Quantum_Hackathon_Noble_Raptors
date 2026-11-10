@@ -13,6 +13,9 @@ md("""
 
 **Is this problem worth running on today's quantum computers, and what would it cost?**
 
+**Who it is for:** an operations or analytics lead (a hospital bed manager, a logistics planner) who
+has been told quantum might help and has to decide whether to spend time and budget finding out.
+
 Give the tool a problem. It builds the quantum circuit in Qiskit, compiles it for a real IBM device,
 and reports the qubits needed, the chance a shot finishes without an error, the QPU seconds, the price
 on each IBM plan, and how long a classical computer takes on the same problem. Then it tests its own
@@ -134,7 +137,8 @@ for n in [2, 3, 4, 5, 6, 8, 10, 12, 13]:
     rows.append((n, r))
     print(f"{n:>2} patients | {r.logical_qubits:>3} qubits | 2q gates {r.metrics.get('two_qubit_gates', '-'):>6} | "
           f"success {fc.core.pct(r.success) if r.success is not None else '-':>11} | "
-          f"classical {r.classical['seconds'] * 1000:.3f} ms | {r.verdict}")
+          f"classical {r.classical['seconds'] * 1000:.3f} ms | {r.verdict}"
+          + (f" (errors must be {r.error_reduction_needed:,.1f}x lower)" if r.error_reduction_needed else ""))
 print()
 for row in fc.assignment_scaling((10, 100, 1000)):
     print(f"Classical: {row['patients']:>4} patients solved exactly in {row['classical_seconds'] * 1000:8.2f} ms "
@@ -149,7 +153,8 @@ for n, r in zip(sizes, maxcut_reports):
         print(f"{n:>3} nodes | {r.verdict}: {r.reasons[0]}")
         continue
     print(f"{n:>3} nodes | 2q gates {r.metrics['two_qubit_gates']:>5} | success {fc.core.pct(r.success):>11} | "
-          f"QPU {r.qpu_seconds:.2f} s | ${r.price['Pay-As-You-Go']:.2f} pay-as-you-go | {r.verdict}")
+          f"QPU {r.qpu_seconds:.2f} s | ${r.price['Pay-As-You-Go']:.2f} pay-as-you-go | {r.verdict}"
+          + (f" (errors must be {r.error_reduction_needed:,.1f}x lower)" if r.error_reduction_needed else ""))
 
 fig, ax = plt.subplots(figsize=(7.5, 4.2))
 fitting = [r for r in maxcut_reports if r.success is not None]
@@ -279,6 +284,10 @@ md("""
   drowned by noise, while the classical solver handles a thousand patients exactly in well under a second.
 - **Max-Cut is an open question.** Small graphs run cleanly; beyond a few dozen nodes noise dominates,
   and no quantum advantage has been proven for it.
+- **What would have to change.** For each problem that fails, the tool reports how many times lower
+  the device's errors would need to be for the same circuit to pass. For the 12-patient assignment
+  that is tens of times lower than this device's error rates (see the table in section 3), and it
+  would still only be a 12-patient problem.
 - **Our formula is optimistic.** It counts gate and readout errors only. It agrees with the noisy
   simulator because that simulator is built from the same error rates; real hardware adds idle
   decoherence, crosstalk and drift, so the hardware points are the real test.

@@ -1,8 +1,11 @@
 # Use case
 
-**Problem.** Teams in hospitals, logistics and finance are told quantum computing may help them, but
-they cannot tell whether their own problem is worth a quantum experiment, or what it would cost.
-Finding out today means hiring an expert or spending scarce hardware time.
+**Problem.** Operations and analytics leads in hospitals, logistics and finance are told quantum
+computing may help them, but they cannot tell whether their own problem is worth a quantum experiment,
+or what it would cost. Finding out today means hiring a specialist or spending scarce hardware time:
+10 free minutes on IBM's Open Plan, then from $96 a minute. The people affected are the decision-maker
+who must approve the spend, and the quantum team asked for an honest answer. Our worked example is a
+hospital bed manager assigning patients to beds.
 
 **Current method.** Read vendor material, or hand-build a circuit and try it. Neither gives a number
 before time and money are spent.
@@ -19,6 +22,9 @@ dominates" and "worth a hardware test".
 **Experiment.** Two problems go through the tool at growing sizes: hospital bed assignment (synthetic
 costs) and Max-Cut on random 3-regular graphs. We then test the estimate with mirror circuits, on a
 noisy simulator and on a real IBM device with error mitigation off and on.
+
+**What would need to improve.** For every problem that fails, the tool reports how many times lower
+the device's errors would have to be for the same circuit to pass.
 
 **Metrics.** Qubits, two-qubit gates, estimated success per shot, QPU seconds, price per IBM plan,
 classical solve time, and predicted against measured success.

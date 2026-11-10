@@ -4,6 +4,18 @@
 
 Team Noble Raptors · Qiskit Fall Fest 2026, Miami Dade College
 
+## The problem
+
+Operations and analytics teams in hospitals, logistics and finance keep hearing that quantum computing
+may help them. They have no quick way to tell whether their own problem is worth a quantum experiment,
+or what one would cost. Today the answer needs a specialist, or scarce hardware time: the free IBM plan
+gives 10 minutes, and paid time starts at $96 a minute. A wrong guess wastes both, and feeds hype.
+
+**Who it is for:** the person who has to decide, such as a hospital bed manager or a logistics planner,
+and the quantum team that has to give them an honest answer.
+
+## What it does
+
 Quantum Fit Check takes a problem, builds its quantum circuit in Qiskit, compiles it for a real IBM
 device, and answers before any quantum time is spent:
 
@@ -11,7 +23,9 @@ device, and answers before any quantum time is spent:
 - the chance a shot finishes without an error, from IBM's published error rates,
 - the QPU seconds and the price on each IBM plan,
 - how long a classical computer takes on the same problem,
-- a verdict: **does not fit**, **runs, but noise dominates**, or **worth a hardware test**.
+- a verdict: **does not fit**, **runs, but noise dominates**, or **worth a hardware test**,
+- when it fails, what would need to improve: how many times lower the device's errors must be,
+- a one-sentence summary in plain words.
 
 It then tests its own estimates with mirror circuits on a noisy simulator and on real hardware.
 

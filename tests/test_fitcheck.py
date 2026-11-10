@@ -121,3 +121,16 @@ def test_odd_and_tiny_sizes(backend):
     for n in (2, 3, 5, 7):
         assert fc.fit_check(fc.maxcut_problem(fc.random_graph(n)), backend).verdict
     assert fc.fit_check(fc.maxcut_from_edges([("a", "b"), ("b", "c", 2.5)]), backend).logical_qubits == 3
+
+
+def test_what_would_need_to_improve(backend):
+    ok = fc.fit_check(fc.maxcut_problem(fc.random_graph(8)), backend)
+    assert ok.error_reduction_needed is None and ok.summary
+    bad = fc.fit_check(fc.maxcut_problem(fc.random_graph(60)), backend)
+    assert bad.error_reduction_needed > 1
+    # scaling every error down by that factor should land on the threshold
+    import math
+    assert math.log(bad.success) / bad.error_reduction_needed == pytest.approx(math.log(0.10), rel=1e-6)
+    assert "What would need to improve" in bad.to_markdown() and "plain words" in bad.to_markdown()
+    huge = fc.fit_check(fc.assignment_problem(fc.synthetic_costs(12)), backend)
+    assert huge.error_reduction_needed > 10 and "times" in huge.summary
