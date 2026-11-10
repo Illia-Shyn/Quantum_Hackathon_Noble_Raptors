@@ -105,3 +105,4 @@ be reproduced. The hospital data is synthetic.
 - `tools/build_notebook.py` regenerates the notebook
 - `tests/` the test suite
 - `USE-CASE.md`, `LIMITATIONS.md`
+- `slides/QA-CHEAT-SHEET.md` short answers to likely judging questions
