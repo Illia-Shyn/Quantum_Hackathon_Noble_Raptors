@@ -1,5 +1,5 @@
 """Smoke tests for the Streamlit app: every verdict type renders in both views without an exception.
-Runs the real script headless (no browser), with keyword intake so no API key is needed."""
+Runs the real script headless (no browser), with keyword intake and the local device, so no key is needed."""
 from pathlib import Path
 
 import pytest
@@ -11,9 +11,9 @@ APP = str(Path(__file__).resolve().parents[1] / "app.py")
 
 
 @pytest.fixture(autouse=True)
-def no_llm(monkeypatch):
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+def no_keys(monkeypatch):
+    for name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "QISKIT_IBM_TOKEN", "QISKIT_IBM_INSTANCE"):
+        monkeypatch.delenv(name, raising=False)
 
 
 def run(view="Simple", **job):
@@ -54,6 +54,13 @@ def test_view_switch_changes_the_tabs_and_back():
     assert not at.exception and expert_only(at)
     at.toggle(key="expert").set_value(False).run()
     assert not at.exception and not expert_only(at)
+
+
+def test_without_keys_says_so():
+    at = run()
+    notes = " ".join(c.value for c in at.sidebar.caption)
+    assert "local copy" in notes and "QISKIT_IBM_TOKEN" in notes and "keyword matching" in notes
+    assert not [r for r in at.sidebar.radio if r.key == "device_source"]
 
 
 def test_noise_dominates():

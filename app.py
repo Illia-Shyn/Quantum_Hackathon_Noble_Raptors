@@ -2,14 +2,17 @@
 
     streamlit run app.py
 
-Uses the local copy of ibm_fez, so it needs no IBM key and spends no QPU time. Hardware results are
-read from results/, where the notebook saves them. A GEMINI_API_KEY (environment variable or Streamlit
-secret) turns on plain-language reading with a language model; without it, keyword matching is used.
+Never spends QPU time: it builds and compiles circuits but never submits a job. Device data comes from
+the local copy of ibm_fez, or, when QISKIT_IBM_TOKEN is set, from ibm_fez's live calibration (read only).
+Hardware results are read from results/, where the notebook saves them. A GEMINI_API_KEY turns on
+plain-language reading with a language model; without it, keyword matching is used. Keys come from
+environment variables or Streamlit secrets. Keep the IBM key on your own laptop, never on a public deploy.
 """
 from __future__ import annotations
 
 import io
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
@@ -45,18 +48,56 @@ PROBLEMS = {
     "assignment_synthetic": "Hospital bed assignment: synthetic data",
     "assignment_upload": "Hospital bed assignment: upload a cost table (CSV)",
 }
-DEVICE_LABEL = "ibm_fez (local copy)"
+LIVE, LOCAL = "Live calibration", "Local copy"
+SECRETS = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GEMINI_MODEL", "QISKIT_IBM_TOKEN", "QISKIT_IBM_INSTANCE")
 VERDICT_BOX = {"worth a hardware test": st.success, "runs, but noise dominates": st.warning,
                "does not fit": st.error, "not sized": st.info}
 
 st.set_page_config(page_title="Quantum Fit Check", page_icon=":material/memory:", layout="wide")
 
+# Streamlit secrets (Community Cloud, or .streamlit/secrets.toml locally) become environment variables,
+# which is where the fitcheck library looks for keys.
+try:
+    for _name in SECRETS:
+        if not os.environ.get(_name) and _name in st.secrets:
+            os.environ[_name] = str(st.secrets[_name])
+except Exception:  # no secrets file: environment variables only
+    pass
+HAS_IBM_KEY = bool(os.environ.get("QISKIT_IBM_TOKEN"))
+
 
 # ---------------------------------------------------------------- cached work
 
 @st.cache_resource(show_spinner=False)
-def device():
+def local_device():
     return fc.local_backend("fez")
+
+
+@st.cache_resource(show_spinner=False, ttl=3600)
+def live_device():
+    """ibm_fez as IBM publishes it now. Reads calibration data only; the app never submits a job."""
+    backend = fc.connect_service().backend("ibm_fez")
+    try:
+        when = backend.properties().last_update_date.astimezone(timezone.utc)
+    except Exception:
+        when = datetime.now(timezone.utc)
+    return backend, when.strftime("%Y-%m-%d %H:%M")
+
+
+def pick_device(source: str):
+    """(backend, short label, sidebar note, cache id)."""
+    if source == LIVE:
+        try:
+            backend, when = live_device()
+            return (backend, "ibm_fez (live)",
+                    f"Device: IBM's 156-qubit **ibm_fez**, live calibration from {when} UTC, read with your IBM key. "
+                    "The app only reads calibration data and never submits a job, so it spends no QPU time.",
+                    f"live {when}")
+        except Exception as exc:
+            st.warning(f"Could not reach IBM ({type(exc).__name__}), so the local copy is used.")
+    note = ("Device: local copy of IBM's 156-qubit **ibm_fez**, with the calibration saved in Qiskit. No QPU time."
+            + ("" if HAS_IBM_KEY else " Set QISKIT_IBM_TOKEN to use today's live calibration instead."))
+    return local_device(), "ibm_fez (local copy)", note, "local"
 
 
 @st.cache_data(show_spinner=False)
@@ -110,21 +151,24 @@ def make_problem(kind: str, size: int, degree: int, seed: int, upload: bytes | N
     raise ValueError(kind)
 
 
+# `device_id` names the device and its calibration for the cache; `_backend` (not hashed) is the device itself.
 @st.cache_resource(show_spinner=False, max_entries=24)
-def run_check(kind: str, size: int, degree: int, seed: int, upload: bytes | None, reps: int, shots: int):
+def run_check(kind: str, size: int, degree: int, seed: int, upload: bytes | None, reps: int, shots: int,
+              device_id: str, _backend):
     problem = make_problem(kind, size, degree, seed, upload)
-    return problem, fc.fit_check(problem, device(), reps, shots, seed)
+    return problem, fc.fit_check(problem, _backend, reps, shots, seed)
 
 
 @st.cache_data(show_spinner=False, max_entries=24)
-def seed_spread(kind: str, size: int, degree: int, seed: int, upload: bytes | None, reps: int) -> list[dict]:
+def seed_spread(kind: str, size: int, degree: int, seed: int, upload: bytes | None, reps: int,
+                device_id: str, _backend) -> list[dict]:
     problem = make_problem(kind, size, degree, seed, upload)
     circuit = fc.bind_random(fc.qaoa_circuit(problem, reps, measure=True), seed)
     rows = []
     for s in range(5):
-        isa = fc.transpile_for(device(), circuit, seed=s, tries=1)
-        rows.append({"seed": s, "success": fc.success_estimate(device(), isa)["success"],
-                     "two_qubit_gates": fc.circuit_metrics(device(), isa)["two_qubit_gates"]})
+        isa = fc.transpile_for(_backend, circuit, seed=s, tries=1)
+        rows.append({"seed": s, "success": fc.success_estimate(_backend, isa)["success"],
+                     "two_qubit_gates": fc.circuit_metrics(_backend, isa)["two_qubit_gates"]})
     return rows
 
 
@@ -169,7 +213,7 @@ with st.sidebar:
         params["text"] = st.text_area("Your task, in one sentence", key="request_text", height=100).strip()
         has_llm = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
         st.caption("Read by the Gemini language model. It only picks the problem type and size; Qiskit does the rest."
-                   if has_llm else "Read by keyword matching (no GEMINI_API_KEY set).")
+                   if has_llm else "Read by keyword matching. Set GEMINI_API_KEY to have a language model read it.")
     else:
         kind = st.selectbox("Problem", list(PROBLEMS), format_func=PROBLEMS.get, key="kind")
         params["kind"] = kind
@@ -202,8 +246,13 @@ with st.sidebar:
         st.caption(":orange[Settings changed. Press **Run fit check** to update.]")
 
     st.divider()
-    st.caption("Device: local copy of IBM's 156-qubit **ibm_fez**. No IBM key, no QPU time. "
-               "Prices: IBM's published rates on 2026-11-10.")
+    source = (st.radio("Device data", [LIVE, LOCAL], horizontal=True, key="device_source",
+                       help="Live: ibm_fez's calibration as IBM publishes it now, read with your IBM key. "
+                            "Local: the copy saved in Qiskit. Neither spends QPU time.")
+              if HAS_IBM_KEY else LOCAL)
+    with st.spinner("Reading ibm_fez's calibration from IBM..."):
+        backend, DEVICE_LABEL, device_note, device_id = pick_device(source)
+    st.caption(device_note + " Prices: IBM's published rates (ibm.com/quantum/pricing), checked 2026-11-10.")
 
 
 # ---------------------------------------------------------------- run
@@ -238,7 +287,7 @@ with st.spinner("Building the circuit and compiling it for the device..."):
                 raise ValueError("Upload a CSV file in the sidebar, then press Run fit check.")
             key = (job["kind"], job.get("size", 0), job.get("degree", 3))
         if key is not None:
-            problem, report = run_check(key[0], key[1], key[2], seed, upload, reps, shots)
+            problem, report = run_check(key[0], key[1], key[2], seed, upload, reps, shots, device_id, backend)
     except ValueError as exc:
         error = str(exc)
     except Exception as exc:  # a broken upload should explain itself, not crash the page
@@ -297,7 +346,6 @@ else:
 
 tab_problem, tab_circuit, tab_qubits, tab_estimates, tab_validation = st.tabs(
     ["Problem", "Circuit", "Qubits", "Estimates", "Validation"])
-backend = device()
 isa = report.compiled
 
 
@@ -461,7 +509,8 @@ with tab_estimates:
             with x2:
                 if problem.num_qubits <= SPREAD_UP_TO:
                     with st.spinner("Compiling with five transpiler seeds..."):
-                        show_fig(vz.seed_spread(seed_spread(key[0], key[1], key[2], seed, upload, reps)))
+                        show_fig(vz.seed_spread(seed_spread(key[0], key[1], key[2], seed, upload, reps,
+                                                            device_id, backend)))
                 else:
                     st.caption(f"The transpiler-seed spread is computed up to {SPREAD_UP_TO} qubits.")
             d = report.device

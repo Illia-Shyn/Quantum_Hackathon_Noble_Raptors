@@ -7,10 +7,10 @@
       "shots": 2000,
       "repeats": 3,
       "two_qubit_gates": 36,
-      "predicted_mean": 0.8772316417206607,
-      "predicted_std": 0.004713200693798314,
-      "simulated_mean": 0.8743333333333334,
-      "simulated_std": 0.008605553762283707
+      "predicted_mean": 0.8765887060402067,
+      "predicted_std": 0.0043365659958240895,
+      "simulated_mean": 0.8726666666666666,
+      "simulated_std": 0.006328945848682479
     },
     {
       "num_nodes": 6,
@@ -18,10 +18,10 @@
       "shots": 2000,
       "repeats": 3,
       "two_qubit_gates": 52,
-      "predicted_mean": 0.8022893418623789,
-      "predicted_std": 0.006864208994696674,
-      "simulated_mean": 0.7943333333333333,
-      "simulated_std": 0.005734883511361756
+      "predicted_mean": 0.8019208176299427,
+      "predicted_std": 0.0068737118537639625,
+      "simulated_mean": 0.7925000000000001,
+      "simulated_std": 0.005612486080160898
     },
     {
       "num_nodes": 8,
@@ -29,10 +29,10 @@
       "shots": 2000,
       "repeats": 3,
       "two_qubit_gates": 100,
-      "predicted_mean": 0.7033293746859588,
-      "predicted_std": 0.019135072699869568,
-      "simulated_mean": 0.6996666666666665,
-      "simulated_std": 0.01896634446123509
+      "predicted_mean": 0.7024744929418226,
+      "predicted_std": 0.01882960289266778,
+      "simulated_mean": 0.6956666666666665,
+      "simulated_std": 0.018571184369578806
     },
     {
       "num_nodes": 10,
@@ -40,10 +40,10 @@
       "shots": 2000,
       "repeats": 3,
       "two_qubit_gates": 112,
-      "predicted_mean": 0.6314569688236816,
-      "predicted_std": 0.01946641884467314,
-      "simulated_mean": 0.6253333333333333,
-      "simulated_std": 0.011418795421973736
+      "predicted_mean": 0.6311722425834914,
+      "predicted_std": 0.019195943729887668,
+      "simulated_mean": 0.6238333333333334,
+      "simulated_std": 0.008055363982396336
     },
     {
       "num_nodes": 12,
@@ -51,10 +51,10 @@
       "shots": 2000,
       "repeats": 3,
       "two_qubit_gates": 146,
-      "predicted_mean": 0.5818943782449053,
-      "predicted_std": 0.01676925372473266,
-      "simulated_mean": 0.5636666666666666,
-      "simulated_std": 0.022702178064866144
+      "predicted_mean": 0.5819033591054775,
+      "predicted_std": 0.016714872400775467,
+      "simulated_mean": 0.5618333333333333,
+      "simulated_std": 0.02010113319083167
     }
   ]
 }

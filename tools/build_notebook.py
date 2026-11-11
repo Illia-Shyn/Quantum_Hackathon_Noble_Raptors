@@ -224,14 +224,24 @@ print(f"Predicted QPU time per job on real hardware: {rehearsal['predicted_qpu_s
 ''')
 
 md("""
-## 7. Real hardware (optional, uses QPU time)
+## 7. Real hardware: our run on IBM's ibm_fez
 
-Set `RUN_ON_HARDWARE = True` to submit. It needs `QISKIT_IBM_TOKEN` and `QISKIT_IBM_INSTANCE` in
-Colab Secrets (the key icon in the sidebar) or environment variables. Never paste a key into a cell.
+**We ran this on 2026-11-10** on `ibm_fez`, IBM's 156-qubit Heron r2 processor, through Qiskit
+Runtime's `SamplerV2` on the free Open Plan. How it ran:
 
-Two jobs of six mirror circuits, 1,000 shots each: about 8 seconds of QPU time in total by IBM's own
-formula. The predictions and job IDs are saved before any result exists. If the queue is long, close
-the notebook and run the collect cell later; it fetches the results by job ID.
+1. Six mirror circuits (Max-Cut QAOA on 4 to 14 nodes, followed by the inverse) were compiled for
+   ibm_fez with the same code as section 6.
+2. **Before submitting**, our predicted success for each circuit was computed from that day's
+   calibration and saved to `results/hardware_run.json` with the job IDs, so the prediction could not
+   be adjusted after seeing the results.
+3. Two jobs ran the six circuits with 1,000 shots each: one with error mitigation **off**, one
+   **on** (dynamical decoupling plus Pauli twirling).
+4. The collect cell fetched the results by job ID and measured the share of all-zero shots.
+
+The cells below show the saved results, so they run without a key and spend nothing. To repeat the
+run, set `RUN_ON_HARDWARE = True`. It needs `QISKIT_IBM_TOKEN` (and optionally `QISKIT_IBM_INSTANCE`)
+in Colab Secrets (the key icon in the sidebar) or environment variables. Never paste a key into a cell.
+It costs about 8 seconds of QPU time.
 """)
 code('''
 RUN_ON_HARDWARE = False
@@ -245,11 +255,18 @@ if RUN_ON_HARDWARE:
     plan["device_snapshot"] = fc.device_summary(real)
     fc.save_json(plan, PLAN_FILE)             # predictions and job IDs on record first
     print("Submitted:", plan["job_ids"])
+elif os.path.exists(PLAN_FILE):
+    saved = fc.load_json(PLAN_FILE)
+    snap = saved.get("device_snapshot", {})
+    print(f"Not resubmitting. Saved run: {saved['backend']}, predictions made {saved['prepared_at'][:19]} UTC")
+    print(f"That day's calibration: two-qubit ({snap.get('two_qubit_gate')}) error {snap.get('median_two_qubit_error', 0):.3%}, "
+          f"readout error {snap.get('median_readout_error', 0):.3%}, {snap.get('num_qubits')} qubits")
+    print("Job IDs:", saved["job_ids"])
 else:
     print("Skipped. Nothing was submitted.")
 ''')
 code('''
-# Collect: run this once the jobs have finished (also works in a new session).
+# Collect: fetches the results by job ID once the jobs have finished (also works in a new session).
 if os.path.exists(PLAN_FILE):
     plan = fc.load_json(PLAN_FILE)
     if "runs" not in plan and RUN_ON_HARDWARE:
@@ -261,12 +278,22 @@ else:
 print("Hardware results available:", hardware_results is not None)
 if hardware_results:
     for key, run in hardware_results["runs"].items():
-        print(f"mitigation {key}: job {run['job_id']}, QPU seconds used {run['qpu_seconds_used']} "
+        print(f"\\nmitigation {key}: job {run['job_id']}, QPU seconds used {run['qpu_seconds_used']} "
               f"(predicted {hardware_results['predicted_qpu_seconds_per_job']:.1f})")
         for r in run["rows"]:
-            print(f"   {r['num_nodes']:>2} nodes | predicted {r['predicted_success']:.3f} | "
+            print(f"   {r['num_nodes']:>2} qubits | {r['two_qubit_gates']:>3} two-qubit gates | predicted {r['predicted_success']:.3f} | "
                   f"measured {r['measured_success']:.3f} +/- {r['measured_stderr']:.3f}")
 ''')
+md("""
+**What the hardware said.** Measured success is below our prediction at every size, and the gap mostly
+grows with the circuit: from about 9 points at 4 qubits to about 31 points at 12 qubits (mitigation off).
+Our formula counts gate and readout errors only; real hardware also loses accuracy while qubits wait,
+to crosstalk between neighbours and to drift, so the formula is optimistic. The noisy simulator could
+not show this, because it is built from the same error rates as the formula. Error mitigation lowered
+the score on these short circuits: twirling adds gates and randomness, and dynamical decoupling helps
+most on long idle periods, which these circuits do not have. QPU time used: 4 seconds per job, close
+to the 3.6 seconds we predicted, so the cost side of the estimate held up.
+""")
 
 md("## 8. Headline chart: predicted against measured success")
 code('''
@@ -288,9 +315,11 @@ md("""
   the device's errors would need to be for the same circuit to pass. For the 12-patient assignment
   that is tens of times lower than this device's error rates (see the table in section 3), and it
   would still only be a 12-patient problem.
-- **Our formula is optimistic.** It counts gate and readout errors only. It agrees with the noisy
-  simulator because that simulator is built from the same error rates; real hardware adds idle
-  decoherence, crosstalk and drift, so the hardware points are the real test.
+- **Our formula is optimistic, and real hardware proved it.** It counts gate and readout errors only.
+  It agrees with the noisy simulator because that simulator is built from the same error rates. On
+  ibm_fez, measured success fell 9 to 31 points below the prediction, and the gap grew with size. The
+  verdicts lean the right way (a circuit we call borderline is worse in practice, not better), and the
+  QPU-time estimate held: 4 seconds used against 3.6 predicted.
 - **Price** uses IBM's published per-minute rates and IBM's own usage formula. It is an estimate, not
   a quote. One job is dominated by a fixed overhead of about 2 seconds; a full QAOA angle search is
   priced as 100 such jobs.

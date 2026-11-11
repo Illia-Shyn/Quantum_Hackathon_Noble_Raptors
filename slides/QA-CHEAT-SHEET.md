@@ -1,7 +1,7 @@
 # Q&A cheat sheet
 
 Short answers to the questions the judging rubric tells judges to ask. Numbers are from the notebook
-run on the local copy of ibm_fez with one QAOA layer.
+run on the local copy of ibm_fez with one QAOA layer, and from our real run on ibm_fez on 2026-11-10.
 
 ## One sentence, no physics
 
@@ -73,7 +73,9 @@ and Runtime SamplerV2 with dynamical decoupling and gate twirling.
 **How do you know it worked?**
 Three checks. The cost functions are tested against brute force and the Hungarian algorithm. The
 success formula is tested with mirror circuits on a noisy simulator: within about 2 percentage points
-for 4 to 12 qubits, three graphs per size. And [hardware result once run].
+for 4 to 12 qubits, three graphs per size. And on real hardware: six mirror circuits on IBM's ibm_fez,
+with our predictions saved before the jobs ran. That one found the formula optimistic, which is the
+point of testing it.
 
 **What did you compare against?**
 Every report includes a timed classical solver on the same problem: 1,000 patients assigned exactly in
@@ -85,7 +87,27 @@ Also that noiseless one-layer QAOA found the best 3-patient assignment in only a
 
 **Isn't the simulator check circular?**
 Partly, and we say so. The simulator uses the same error rates as the formula, so it checks the
-formula is computed correctly. Only real hardware tests whether it matches a device.
+formula is computed correctly. That is why we ran on real hardware, which is the honest test.
+
+**Did you run on real quantum hardware?**
+Yes, on IBM's ibm_fez (156-qubit Heron r2) on 2026-11-10, through Qiskit Runtime SamplerV2 on the free
+Open Plan. Two jobs of six mirror circuits, 1,000 shots each, error mitigation off and on. Job IDs
+dbpq5q44148s739v19j0 and dbpq5r8ou4as73cu2ts0. It used 8 seconds of QPU time in total; we predicted 7.
+
+**What did the hardware show?**
+Measured success was below our prediction at every size: 82% against 90% at 4 qubits, 23% against 54%
+at 12 qubits. The gap grows with the circuit because real hardware also loses accuracy while qubits
+wait, to crosstalk and to drift, which our formula leaves out. So a "worth a hardware test" verdict near
+the threshold really means "probably not", and our "noise dominates" verdicts are, if anything, generous.
+
+**Why did error mitigation make it worse?**
+Twirling adds gates and randomness, and dynamical decoupling mainly helps during long idle periods.
+These circuits are short, so the overhead cost more than it saved. We report it rather than hide it.
+
+**Why mirror circuits instead of solving the problem on hardware?**
+A mirror circuit has a known right answer (all zeros), so the share of correct shots measures exactly
+the quantity our tool predicts: the chance a shot has no error. A QAOA answer on its own can't be
+scored that way.
 
 ## Innovation
 
@@ -108,4 +130,6 @@ is our choice. See LIMITATIONS.md.
 
 ## Next steps
 
-Add idle decoherence to the formula, size chemistry problems, and let people upload their own tables.
+Add idle decoherence and crosstalk to the formula, using the hardware gap we measured to calibrate it;
+repeat the hardware run on more days and devices; size chemistry problems. Already built: uploads of
+your own tables and networks, and live ibm_fez calibration in the app.
