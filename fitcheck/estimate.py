@@ -16,12 +16,25 @@ BROKEN_GATE_ERROR = 0.5    # calibration data marks dead couplers with an error 
 _TARGET_CACHE: dict = {}
 
 
+def _broken(p) -> bool:
+    return p is not None and p.error is not None and p.error >= BROKEN_GATE_ERROR
+
+
+def dead_qubits(backend) -> set[int]:
+    """Qubits whose single-qubit gates or readout are reported broken. Calibration data can mark a
+    qubit dead while still listing working couplers to it, so the couplers alone are not enough."""
+    src = backend.target
+    return {q for name in ("sx", "x", "measure") if name in src.operation_names
+            for qargs, p in src[name].items() if qargs and _broken(p) for q in qargs}
+
+
 def usable_target(backend) -> Target:
-    """The device's target without gates whose reported error is 0.5 or more (dead couplers),
-    so the transpiler never routes through them."""
+    """The device's target without gates whose reported error is 0.5 or more (dead couplers) and
+    without any gate on a dead qubit, so the transpiler never places or routes through them."""
     key = id(backend)
     if key not in _TARGET_CACHE:
         src = backend.target
+        dead = dead_qubits(backend)
         new = Target(num_qubits=src.num_qubits, dt=src.dt, qubit_properties=src.qubit_properties)
         for name in src.operation_names:
             op = src.operation_from_name(name)
@@ -29,7 +42,7 @@ def usable_target(backend) -> Target:
                 new.add_instruction(op, name=name)
                 continue
             props = {q: p for q, p in src[name].items()
-                     if not (p is not None and p.error is not None and p.error >= BROKEN_GATE_ERROR)}
+                     if not _broken(p) and not (q and dead.intersection(q))}
             new.add_instruction(op, props, name=name)
         _TARGET_CACHE[key] = new
     return _TARGET_CACHE[key]
