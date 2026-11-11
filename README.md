@@ -50,6 +50,27 @@ pip install -r requirements.txt
 jupyter notebook notebooks/quantum_fit_check.ipynb
 ```
 
+**The interactive app** (Streamlit, on a laptop):
+
+```bash
+streamlit run app.py
+```
+
+It opens at http://localhost:8501. Describe a task in plain words or pick a problem (a random network,
+synthetic hospital data, or your own CSV), press **Run fit check**, and read the answer in five tabs:
+Problem, Circuit, Qubits (a live map of the 156-qubit chip), Estimates and Validation. **Simple** view is
+for the decision maker; **Expert** view adds the cost-function heatmap, gate counts and drawings, per-link
+error rates, the price on every plan and the transpiler-seed spread. Hover any chart for its numbers, and
+download the report as Markdown. The app never submits a job, so it spends no QPU time. By default it
+uses the local copy of ibm_fez; with `QISKIT_IBM_TOKEN` set on your laptop, a **Device data** switch
+appears in the sidebar and **Live calibration** reads ibm_fez's error rates as IBM publishes them now
+(read only). The Validation tab reads the hardware results saved in `results/`.
+
+To publish it, deploy the repository on Streamlit Community Cloud with `app.py` as the entry point. For
+plain-language intake there, add `GEMINI_API_KEY` under the app's Secrets; locally, use an environment
+variable or `.streamlit/secrets.toml` (git-ignored). Never give a public deploy an IBM key: the app only
+reads calibration, but the key itself could spend your minutes if it leaked.
+
 **In code:**
 
 ```python
@@ -73,8 +94,8 @@ Keys go in Colab Secrets (the key icon in the sidebar) or environment variables.
 
 | Name | Used for |
 | --- | --- |
-| `GEMINI_API_KEY` | Plain-language intake. Without it the tool uses keyword matching. `GEMINI_MODEL` overrides the model. |
-| `QISKIT_IBM_TOKEN`, `QISKIT_IBM_INSTANCE` | The real hardware run in section 7 of the notebook. |
+| `GEMINI_API_KEY` | Plain-language intake, in the notebook and the app. Without it the tool uses keyword matching. `GEMINI_MODEL` overrides the model. |
+| `QISKIT_IBM_TOKEN`, `QISKIT_IBM_INSTANCE` | The real hardware run in section 7 of the notebook, and live ibm_fez calibration in the app (laptop only). |
 
 ## How it works
 
@@ -94,13 +115,47 @@ IBM's "Workload usage" guide.
 
 ## Results
 
-Saved in [results/](results/): the simulator validation data, the headline chart, and the hardware run
-once it has been submitted. All generated graphs and cost tables use fixed seeds, so every number can
-be reproduced. The hospital data is synthetic.
+Saved in [results/](results/): the simulator validation data, the real hardware run and the headline
+chart. All generated graphs and cost tables use fixed seeds, so every number can be reproduced. The
+hospital data is synthetic.
+
+**What the tool says.** On ibm_fez, assigning 12 patients to 12 beds needs 144 of 156 qubits and about
+15,000 two-qubit gates after compiling; the chance a shot has no error is under 0.01%, while a
+classical solver assigns 1,000 patients exactly in milliseconds. Max-Cut stays above our 10% threshold
+up to about 30 nodes.
+
+**Noisy simulator.** Predicted and simulated success agree within about 2 percentage points for 4 to 12
+qubits, three random graphs per size (section 5 of the notebook).
+
+**Real hardware: IBM ibm_fez, 2026-11-10.** We ran six mirror circuits (Max-Cut QAOA on 4 to 14 qubits
+followed by its inverse; a perfect device returns all zeros) through Qiskit Runtime `SamplerV2` on the
+free Open Plan, 1,000 shots each, in two jobs: error mitigation off and on (dynamical decoupling plus
+Pauli twirling). Our predictions and the job IDs were saved before any result came back. Section 7 of
+the notebook shows the run; the data is in [results/hardware_run.json](results/hardware_run.json).
+
+| Qubits | Two-qubit gates | Predicted | Measured, mitigation off | Measured, mitigation on |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 | 32 | 90.2% | 81.6% ± 1.2 | 76.3% ± 1.3 |
+| 6 | 58 | 82.9% | 74.1% ± 1.4 | 63.5% ± 1.5 |
+| 8 | 78 | 77.5% | 67.2% ± 1.5 | 52.6% ± 1.6 |
+| 10 | 113 | 68.1% | 44.6% ± 1.6 | 34.1% ± 1.5 |
+| 12 | 172 | 53.9% | 23.1% ± 1.3 | 15.4% ± 1.1 |
+| 14 | 166 | 52.2% | 37.4% ± 1.5 | 20.0% ± 1.3 |
+
+Job IDs `dbpq5q44148s739v19j0` (off) and `dbpq5r8ou4as73cu2ts0` (on). QPU time used: 4 seconds per job,
+against 3.6 predicted.
+
+**What we learned.** Our success formula is optimistic on real hardware, by 9 to 31 points, and more so
+for larger circuits, because it leaves out idle decoherence, crosstalk and drift. The simulator could
+not reveal this, since it uses the same error rates. The cost side held up. Mitigation lowered the score
+on these short circuits. See [LIMITATIONS.md](LIMITATIONS.md).
+
+![Predicted against measured success](results/validation.png)
 
 ## Files
 
-- `fitcheck/` the library
+- `fitcheck/` the library (`fitcheck/visuals.py` holds the interactive Plotly charts)
+- `app.py` the interactive Streamlit app
 - `notebooks/quantum_fit_check.ipynb` the demo, with outputs
 - `tools/build_notebook.py` regenerates the notebook
 - `tests/` the test suite

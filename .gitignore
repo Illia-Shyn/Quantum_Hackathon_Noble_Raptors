@@ -10,3 +10,4 @@ scratch*.py
 PARTICIPANT_HANDBOOK.md
 Grading criteria*
 Quantum Fit Check*build plan.md
+.streamlit/secrets.toml

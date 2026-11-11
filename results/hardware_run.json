@@ -1,0 +1,242 @@
+{
+  "backend": "ibm_fez",
+  "shots": 1000,
+  "sizes": [
+    4,
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "prepared_at": "2026-11-10T23:04:10.614290+00:00",
+  "predicted_qpu_seconds_per_job": 3.563072,
+  "predictions": [
+    {
+      "num_nodes": 4,
+      "reps": 1,
+      "seed": 7,
+      "depth": 118,
+      "two_qubit_gates": 32,
+      "duration_seconds": 4.868000000000001e-06,
+      "predicted_success": 0.9023950319324239
+    },
+    {
+      "num_nodes": 6,
+      "reps": 1,
+      "seed": 7,
+      "depth": 158,
+      "two_qubit_gates": 58,
+      "duration_seconds": 6.3160000000000036e-06,
+      "predicted_success": 0.8286329456746793
+    },
+    {
+      "num_nodes": 8,
+      "reps": 1,
+      "seed": 7,
+      "depth": 146,
+      "two_qubit_gates": 78,
+      "duration_seconds": 5.972000000000003e-06,
+      "predicted_success": 0.7749385465490657
+    },
+    {
+      "num_nodes": 10,
+      "reps": 1,
+      "seed": 7,
+      "depth": 241,
+      "two_qubit_gates": 113,
+      "duration_seconds": 8.484000000000007e-06,
+      "predicted_success": 0.6814652703344452
+    },
+    {
+      "num_nodes": 12,
+      "reps": 1,
+      "seed": 7,
+      "depth": 272,
+      "two_qubit_gates": 172,
+      "duration_seconds": 1.0512000000000009e-05,
+      "predicted_success": 0.5386594855344684
+    },
+    {
+      "num_nodes": 14,
+      "reps": 1,
+      "seed": 7,
+      "depth": 186,
+      "two_qubit_gates": 166,
+      "duration_seconds": 7.092000000000005e-06,
+      "predicted_success": 0.5222119683653386
+    }
+  ],
+  "job_ids": {
+    "off": "dbpq5q44148s739v19j0",
+    "on": "dbpq5r8ou4as73cu2ts0"
+  },
+  "device_snapshot": {
+    "backend": "ibm_fez",
+    "num_qubits": 156,
+    "two_qubit_gate": "cz",
+    "median_two_qubit_error": 0.0024480687741191415,
+    "median_sx_error": 0.0002926223442151813,
+    "median_readout_error": 0.01220703125
+  },
+  "runs": {
+    "off": {
+      "job_id": "dbpq5q44148s739v19j0",
+      "qpu_seconds_used": 4.0,
+      "collected_at": "2026-11-10T23:04:41.490574+00:00",
+      "rows": [
+        {
+          "num_nodes": 4,
+          "reps": 1,
+          "seed": 7,
+          "depth": 118,
+          "two_qubit_gates": 32,
+          "duration_seconds": 4.868000000000001e-06,
+          "predicted_success": 0.9023950319324239,
+          "measured_success": 0.816,
+          "measured_stderr": 0.012253326079069309,
+          "shots": 1000
+        },
+        {
+          "num_nodes": 6,
+          "reps": 1,
+          "seed": 7,
+          "depth": 158,
+          "two_qubit_gates": 58,
+          "duration_seconds": 6.3160000000000036e-06,
+          "predicted_success": 0.8286329456746793,
+          "measured_success": 0.741,
+          "measured_stderr": 0.013853483316480371,
+          "shots": 1000
+        },
+        {
+          "num_nodes": 8,
+          "reps": 1,
+          "seed": 7,
+          "depth": 146,
+          "two_qubit_gates": 78,
+          "duration_seconds": 5.972000000000003e-06,
+          "predicted_success": 0.7749385465490657,
+          "measured_success": 0.672,
+          "measured_stderr": 0.014846413708367418,
+          "shots": 1000
+        },
+        {
+          "num_nodes": 10,
+          "reps": 1,
+          "seed": 7,
+          "depth": 241,
+          "two_qubit_gates": 113,
+          "duration_seconds": 8.484000000000007e-06,
+          "predicted_success": 0.6814652703344452,
+          "measured_success": 0.446,
+          "measured_stderr": 0.01571890581433708,
+          "shots": 1000
+        },
+        {
+          "num_nodes": 12,
+          "reps": 1,
+          "seed": 7,
+          "depth": 272,
+          "two_qubit_gates": 172,
+          "duration_seconds": 1.0512000000000009e-05,
+          "predicted_success": 0.5386594855344684,
+          "measured_success": 0.231,
+          "measured_stderr": 0.013328128150644412,
+          "shots": 1000
+        },
+        {
+          "num_nodes": 14,
+          "reps": 1,
+          "seed": 7,
+          "depth": 186,
+          "two_qubit_gates": 166,
+          "duration_seconds": 7.092000000000005e-06,
+          "predicted_success": 0.5222119683653386,
+          "measured_success": 0.374,
+          "measured_stderr": 0.015301111070768685,
+          "shots": 1000
+        }
+      ]
+    },
+    "on": {
+      "job_id": "dbpq5r8ou4as73cu2ts0",
+      "qpu_seconds_used": 4.0,
+      "collected_at": "2026-11-10T23:04:41.827161+00:00",
+      "rows": [
+        {
+          "num_nodes": 4,
+          "reps": 1,
+          "seed": 7,
+          "depth": 118,
+          "two_qubit_gates": 32,
+          "duration_seconds": 4.868000000000001e-06,
+          "predicted_success": 0.9023950319324239,
+          "measured_success": 0.7626953125,
+          "measured_stderr": 0.01329470541900983,
+          "shots": 1024
+        },
+        {
+          "num_nodes": 6,
+          "reps": 1,
+          "seed": 7,
+          "depth": 158,
+          "two_qubit_gates": 58,
+          "duration_seconds": 6.3160000000000036e-06,
+          "predicted_success": 0.8286329456746793,
+          "measured_success": 0.634765625,
+          "measured_stderr": 0.015046744428248352,
+          "shots": 1024
+        },
+        {
+          "num_nodes": 8,
+          "reps": 1,
+          "seed": 7,
+          "depth": 146,
+          "two_qubit_gates": 78,
+          "duration_seconds": 5.972000000000003e-06,
+          "predicted_success": 0.7749385465490657,
+          "measured_success": 0.5263671875,
+          "measured_stderr": 0.015603258981479008,
+          "shots": 1024
+        },
+        {
+          "num_nodes": 10,
+          "reps": 1,
+          "seed": 7,
+          "depth": 241,
+          "two_qubit_gates": 113,
+          "duration_seconds": 8.484000000000007e-06,
+          "predicted_success": 0.6814652703344452,
+          "measured_success": 0.3408203125,
+          "measured_stderr": 0.014812032794827365,
+          "shots": 1024
+        },
+        {
+          "num_nodes": 12,
+          "reps": 1,
+          "seed": 7,
+          "depth": 272,
+          "two_qubit_gates": 172,
+          "duration_seconds": 1.0512000000000009e-05,
+          "predicted_success": 0.5386594855344684,
+          "measured_success": 0.154296875,
+          "measured_stderr": 0.011288534237866611,
+          "shots": 1024
+        },
+        {
+          "num_nodes": 14,
+          "reps": 1,
+          "seed": 7,
+          "depth": 186,
+          "two_qubit_gates": 166,
+          "duration_seconds": 7.092000000000005e-06,
+          "predicted_success": 0.5222119683653386,
+          "measured_success": 0.2001953125,
+          "measured_stderr": 0.012504575309264436,
+          "shots": 1024
+        }
+      ]
+    }
+  }
+}

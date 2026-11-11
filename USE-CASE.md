@@ -32,7 +32,9 @@ classical solve time, and predicted against measured success.
 **Evidence.** In `results/` and the notebook. On the local copy of ibm_fez: 12 patients need 144 of 156
 qubits and about 15,000 two-qubit gates, with an estimated success under 0.01%, while the classical
 solver handles 1,000 patients exactly in milliseconds. Max-Cut passes our 10% threshold up to about 30
-nodes. Predicted and simulated success agree within about 2 percentage points for 4 to 12 nodes.
+nodes. Predicted and simulated success agree within about 2 percentage points for 4 to 12 nodes. On
+real hardware (ibm_fez, 2026-11-10, two jobs, job IDs in `results/hardware_run.json`) measured success
+was 9 to 31 points below the prediction, and the QPU time used (4 s per job) matched the 3.6 s predicted.
 
 **Limitations.** See `LIMITATIONS.md`. The main ones: the formula ignores idle decoherence and
 crosstalk, the simulator shares the formula's error rates, and the shape labels are our documented

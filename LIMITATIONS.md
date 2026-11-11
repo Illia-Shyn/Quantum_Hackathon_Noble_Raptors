@@ -6,19 +6,27 @@ What this work cannot support.
 was solved faster and exactly, or near-exactly, by the classical baseline.
 
 **The success formula is optimistic.** It multiplies (1 - error) over every gate and readout. It leaves
-out idle decoherence (T1 and T2), crosstalk, leakage and calibration drift. Real hardware should score
-lower than the prediction, more so for deeper circuits.
+out idle decoherence (T1 and T2), crosstalk, leakage and calibration drift. Real hardware confirmed
+this: on ibm_fez (2026-11-10) measured success was 9 to 31 percentage points below the prediction, and
+the gap mostly grew with circuit size. Treat a "worth a hardware test" verdict near the threshold as
+"probably not".
 
 **The simulator check is partly circular.** The noisy simulator is built from the same error rates the
 formula uses, so their agreement shows the formula is computed correctly, not that it matches a real
-device. Only the hardware points test that.
+device. Only the hardware points test that, and they came in lower (see above).
+
+**One hardware run.** The hardware check is one day on one device: six circuits of 4 to 14 qubits, two
+jobs of 1,000 shots. It shows the direction and rough size of the gap, not a calibrated correction.
+Error mitigation (dynamical decoupling plus twirling) lowered the score on these short circuits; we
+did not tune it.
 
 **Success is not solution quality.** The estimate is the chance that a shot has no error. It says
 nothing about whether QAOA would find a good answer. In our noiseless test, one-layer QAOA on a
 3-patient assignment returned the optimum in about 1% of shots.
 
 **Device data is a snapshot.** The local copy of ibm_fez holds one past calibration. Error rates change
-daily; the hardware cell records a fresh summary at run time. We drop couplers reported with an error
+daily; the hardware cell records a fresh summary at run time, and the app can read ibm_fez's live
+calibration when an IBM key is set. We drop couplers reported with an error
 of 0.5 or more and keep the best of three transpiler seeds, which is itself a choice.
 
 **Price is an estimate, not a quote.** It uses IBM's published starting prices (read 2026-11-10) and

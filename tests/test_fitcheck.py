@@ -72,6 +72,23 @@ def test_transpiler_avoids_dead_couplers(backend):
             assert backend.target["cz"][q].error < 0.5
 
 
+def test_transpiler_avoids_dead_qubits():
+    """Live calibration can mark a qubit dead (single-qubit error 1.0) while its couplers look fine."""
+    from qiskit.transpiler import InstructionProperties
+    from fitcheck.estimate import dead_qubits
+    from fitcheck.visuals import used_qubits
+
+    circuit = fc.bind_random(fc.qaoa_circuit(fc.assignment_problem(fc.synthetic_costs(3)), 1, True))
+    healthy = fc.local_backend()
+    victim = min(used_qubits(fc.transpile_for(healthy, circuit, tries=1))[0])
+    sick = fc.local_backend()
+    for gate in ("sx", "x"):
+        sick.target.update_instruction_properties(gate, (victim,), InstructionProperties(error=1.0))
+    assert victim in dead_qubits(sick)
+    assert not any(victim in q for q in usable_target(sick)["cz"])
+    assert victim not in used_qubits(fc.transpile_for(sick, circuit, tries=1))[0]
+
+
 def test_prediction_tracks_noisy_simulator(backend):
     rows = fc.simulator_sweep((4, 8), backend, shots=1000, seeds=(1,))
     for r in rows:
